@@ -74,7 +74,7 @@ func upstreamGenerate(ccReq *CCRequest) (*http.Response, error) {
 	req.Header.Set("User-Agent", "cli")
 	req.Header.Set("x-command-code-version", cliVersion)
 	req.Header.Set("x-cli-environment", "production")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+keys.current())
 	client := &http.Client{Timeout: 10 * time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -167,8 +167,8 @@ func handleModels(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleChat(w http.ResponseWriter, r *http.Request) {
-	if apiKey == "" {
-		writeOAError(w, 500, "server_error", "CMDC_API_KEY not configured")
+	if keys.current() == "" {
+		writeOAError(w, 500, "server_error", "no API key configured (set via env or POST /admin/account)")
 		return
 	}
 	var req OARequest
@@ -378,8 +378,9 @@ func streamSSE(w http.ResponseWriter, body io.Reader, model string) {
 }
 
 func main() {
-	if apiKey == "" {
-		log.Fatal("CMDC_API_KEY env var is required")
+	loadKey()
+	if keys.current() == "" {
+		log.Fatal("no API key: set CMDC_API_KEY or POST /admin/account")
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -387,6 +388,16 @@ func main() {
 	})
 	mux.HandleFunc("/v1/models", handleModels)
 	mux.HandleFunc("/v1/chat/completions", handleChat)
+	mux.HandleFunc("/admin/account", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handleAccountGet(w, r)
+		case http.MethodPost:
+			handleAccountSet(w, r)
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
 	log.Printf("commandcode-bridge listening on %s -> %s", listenAddr, baseURL)
 	log.Fatal(http.ListenAndServe(listenAddr, mux))
 }

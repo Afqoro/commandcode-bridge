@@ -61,6 +61,22 @@ Headers: `Authorization: Bearer <key>`, `x-command-code-version`, `x-cli-environ
 
 Stream events (one JSON per line): `text-delta`, `reasoning-start/-delta/-end`, `tool-call`, `tool-result`, `finish` (with `totalUsage`), `error`, `abort`.
 
+## Account switching (admin API)
+
+The active API key lives in `account.json` (gitignored; wins over the `CMDC_API_KEY` env bootstrap) and can be swapped at runtime without a restart:
+
+```bash
+# who is logged in (live whoami + key preview)
+curl http://127.0.0.1:18766/admin/account
+
+# switch to another account (validated against /alpha/whoami first)
+curl -X POST http://127.0.0.1:18766/admin/account \
+  -H 'Content-Type: application/json' \
+  -d '{"api_key":"user_NEWKEY..."}'
+```
+
+Set `CMDC_ADMIN_TOKEN` to require `Authorization: Bearer <token>` on the admin endpoints.
+
 ## Pitfalls
 
 - **`params.tools` must be `[]`, never `null`** — upstream 400 validation error otherwise.
