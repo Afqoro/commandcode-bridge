@@ -1,0 +1,8 @@
+commandcode-bridge
+*.exe
+vendor/
+node_modules/
+*.log
+.DS_Store
+.idea/
+.vscode/
