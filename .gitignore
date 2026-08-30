@@ -4,5 +4,6 @@ vendor/
 node_modules/
 *.log
 .DS_Store
+ecosystem.commandcode-bridge.config.js
 .idea/
 .vscode/
