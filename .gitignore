@@ -8,3 +8,5 @@ ecosystem.commandcode-bridge.config.js
 account.json
 .idea/
 .vscode/
+
+.hermes/
